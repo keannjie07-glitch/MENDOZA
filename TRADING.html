@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Forex Live Terminal | Trading Journal</title>
+
+    <!-- ===== STYLES ===== -->
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-primary: #0b0d13;
+            --bg-secondary: #13151f;
+            --bg-card: #1a1d29;
+            --border-color: #2a2d3a;
+            --border-hover: #3e4252;
+            --text-primary: #e9ecf2;
+            --text-secondary: #8b8fa5;
+            --accent-green: #26a69a;
+            --accent-red: #ef5350;
+            --accent-blue: #42a5f5;
+            --accent-gold: #ffb74d;
+            --shadow-card: 0 8px 32px rgba(0,0,0,0.5);
+            --radius-card: 16px;
+            --radius-inner: 12px;
+            --glass-bg: rgba(26,29,41,0.7);
+            --glass-border: rgba(255,255,255,0.08);
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg-primary);
+            background-image:
+                radial-gradient(ellipse at 10% 20%, rgba(66,165,245,0.05) 0%, transparent 55%),
+                radial-gradient(ellipse at 85% 75%, rgba(38,166,154,0.06) 0%, transparent 55%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 18px 20px 20px;
+            line-height: 1.5;
+        }
+
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
+
+        .app-header {
+            display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+            gap: 16px; margin-bottom: 20px; padding: 18px 22px;
+            background: var(--glass-bg); backdrop-filter: blur(10px);
+            border-radius: var(--radius-card); border: 1px solid var(--glass-border);
+            box-shadow: 0 12px 36px rgba(0,0,0,0.45);
+        }
+
+        .header-left { display: flex; align-items: center; gap: 12px; }
+        .logo-icon {
+            width: 42px; height: 42px; border-radius: 12px;
+            background: linear-gradient(135deg, #1c2a40, #1a2a3a);
+            border: 1px solid var(--border-hover);
+            display: flex; align-items: center; justify-content: center; font-size: 20px;
+        }
+        .logo-icon .chart-bars { display: flex; align-items: flex-end; gap: 3px; height: 18px; }
+        .logo-icon .chart-bars span {
+            display: block; width: 4px; border-radius: 2px;
+            background: var(--accent-green); animation: barPulse 1.6s infinite;
+        }
+        .logo-icon .chart-bars span:nth-child(1) { height: 8px; animation-delay: 0s; }
+        .logo-icon .chart-bars span:nth-child(2) { height: 16px; animation-delay: 0.2s; background: var(--accent-blue); }
+        .logo-icon .chart-bars span:nth-child(3) { height: 11px; animation-delay: 0.4s; }
+        .logo-icon .chart-bars span:nth-child(4) { height: 18px; animation-delay: 0.6s; background: var(--accent-gold); }
+
+        @keyframes barPulse { 0%,100% { opacity:0.6; } 50% { opacity:1; } }
+
+        .header-title h1 { font-size: 1.5rem; font-weight: 700; color: #fff; }
+        .header-title .subtitle { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; }
+
+        .header-right { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+        .live-indicator {
+            display: flex; align-items: center; gap: 6px;
+            background: rgba(38,166,154,0.12); border: 1px solid rgba(38,166,154,0.3);
+            padding: 6px 14px; border-radius: 22px;
+            font-size: 0.75rem; font-weight: 600; color: var(--accent-green);
+        }
+        .pulse-dot {
+            width: 8px; height: 8px; border-radius: 50%; background: var(--accent-green);
+            animation: pulse 1.8s infinite; box-shadow: 0 0 8px var(--accent-green);
+        }
+        @keyframes pulse { 0%,100% { transform: scale(1); opacity:1; } 50% { transform: scale(1.8); opacity:0.4; } }
+
+        .utc-clock {
+            font-size: 0.8rem; color: var(--text-secondary); font-family: monospace;
+            background: rgba(0,0,0,0.25); padding: 5px 12px; border-radius: 16px; border: 1px solid var(--border-color);
+        }
+        .utc-clock .time { color: #fff; font-weight: 600; }
+        .market-badge {
+            font-size: 0.7rem; padding: 5px 13px; border-radius: 18px; font-weight: 600; text-transform: uppercase;
+        }
+        .market-open { background: rgba(38,166,154,0.15); color: var(--accent-green); border: 1px solid rgba(38,166,154,0.35); }
+        .market-closed { background: rgba(239,83,80,0.12); color: var(--accent-red); border: 1px solid rgba(239,83,80,0.3); }
+
+        .controls-bar {
+            display: flex; align-items: center; gap: 16px; margin-bottom: 14px; flex-wrap: wrap;
+            padding: 10px 14px; background: var(--glass-bg); border-radius: 14px;
+            border: 1px solid var(--glass-border);
+        }
+        .controls-label { font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; }
+        .timeframe-select {
+            background: var(--bg-card); border: 1px solid var(--border-color); color: #fff;
+            padding: 8px 14px; border-radius: 10px; font-weight: 600; font-size: 0.8rem;
+            cursor: pointer; outline: none; appearance: none; padding-right: 32px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="%238b8fa5"><path d="M7 10l5 5 5-5z"/></svg>');
+            background-repeat: no-repeat; background-position: right 12px center;
+        }
+        .timeframe-select:hover { border-color: var(--accent-blue); box-shadow: 0 0 12px rgba(66,165,245,0.25); }
+        .timeframe-select option { background: var(--bg-card); color: #fff; }
+
+        .dashboard-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
+        @media (max-width: 1200px) { .dashboard-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 768px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .app-header { flex-direction: column; align-items: flex-start; }
+            body { padding: 10px; }
+        }
+
+        .pair-card {
+            background: var(--glass-bg); backdrop-filter: blur(6px);
+            border-radius: var(--radius-card); border: 1px solid var(--glass-border);
+            overflow: hidden; box-shadow: var(--shadow-card); transition: transform 0.2s;
+            display: flex; flex-direction: column; min-height: 370px;
+        }
+        .pair-card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+        .card-accent { position: absolute; top: 0; left: 0; right: 0; height: 2px; z-index: 2; opacity: 0.7; }
+        .accent-eur { background: linear-gradient(90deg, #42a5f5, #90caf9); }
+        .accent-gbp { background: linear-gradient(90deg, #ef5350, #ef9a9a); }
+        .accent-aud { background: linear-gradient(90deg, #ffb74d, #ffcc80); }
+        .accent-jpy { background: linear-gradient(90deg, #ba68c8, #ce93d8); }
+        .accent-chf { background: linear-gradient(90deg, #4db6ac, #80cbc4); }
+        .accent-cad { background: linear-gradient(90deg, #ff8a65, #ffab91); }
+
+        .card-label { padding: 14px 14px 6px; display: flex; align-items: center; justify-content: space-between; }
+        .pair-name { font-weight: 700; font-size: 0.9rem; color: #fff; }
+        .pair-flag { font-size: 1.1rem; opacity: 0.8; }
+
+        .chart-container { flex: 1; min-height: 280px; position: relative; margin: 4px 6px 6px; border-radius: var(--radius-inner); overflow: hidden; background: #0c0e16; }
+        .chart-container .tradingview-widget-container { height: 100%; width: 100%; }
+
+        .skeleton-loader { position: absolute; inset: 0; background: #12151e; display: flex; align-items: center; justify-content: center; z-index: 5; }
+        .skeleton-loader .spinner { width: 32px; height: 32px; border: 3px solid var(--border-color); border-top-color: var(--accent-blue); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .view-full {
+            display: inline-block; margin-top: 8px; padding: 8px 16px;
+            background: rgba(66,165,245,0.15); border: 1px solid var(--accent-blue);
+            border-radius: 8px; color: var(--accent-blue); font-size: 0.75rem;
+            font-weight: 600; text-decoration: none; text-transform: uppercase;
+            letter-spacing: 0.4px; transition: background 0.2s, color 0.2s;
+            align-self: flex-end;
+        }
+        .view-full:hover { background: var(--accent-blue); color: #fff; }
+
+        .calendar-section, .journal-section { margin-bottom: 28px; }
+        .calendar-card, .journal-card {
+            background: var(--glass-bg); backdrop-filter: blur(8px);
+            border-radius: var(--radius-card); border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-card); overflow: hidden;
+        }
+        .calendar-header { padding: 16px 20px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 10px; }
+        .calendar-body { padding: 0; height: 520px; background: #0c0e16; }
+
+        .journal-header { padding: 18px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .journal-header h2 { font-size: 1.1rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
+        .journal-form {
+            padding: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px; border-bottom: 1px solid var(--border-color);
+        }
+        .journal-form input, .journal-form select, .journal-form button {
+            background: var(--bg-card); border: 1px solid var(--border-color); color: #fff;
+            padding: 10px 12px; border-radius: 8px; font-size: 0.8rem; outline: none;
+        }
+        .journal-form input:focus, .journal-form select:focus { border-color: var(--accent-blue); }
+        .journal-form button {
+            background: var(--accent-blue); border: none; font-weight: 600; cursor: pointer;
+        }
+        .journal-form button:hover { background: #5ab0f9; }
+        .journal-form button.delete-btn { background: transparent; border: 1px solid var(--accent-red); color: var(--accent-red); }
+        .journal-form .full-width { grid-column: 1 / -1; }
+
+        .journal-entries { max-height: 400px; overflow-y: auto; padding: 10px 20px; }
+        .journal-entry {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+            flex-wrap: wrap; gap: 10px; font-size: 0.8rem;
+        }
+        .entry-pair { font-weight: 700; color: #fff; min-width: 80px; }
+        .entry-direction { font-weight: 600; min-width: 60px; }
+        .entry-direction.buy { color: var(--accent-green); }
+        .entry-direction.sell { color: var(--accent-red); }
+        .entry-details { display: flex; gap: 15px; flex-wrap: wrap; color: var(--text-secondary); }
+        .entry-risk { color: var(--accent-gold); font-weight: 600; }
+        .entry-notes { color: var(--text-secondary); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .entry-actions button {
+            background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary);
+            padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.7rem;
+        }
+        .entry-actions button:hover { border-color: var(--accent-red); color: var(--accent-red); }
+        .no-entries { text-align: center; padding: 30px; color: var(--text-secondary); }
+        .page-footer { text-align: center; margin-top: 18px; font-size: 0.7rem; color: var(--text-secondary); opacity: 0.6; }
+    </style>
+</head>
+<body>
+    <header class="app-header">
+        <div class="header-left">
+            <div class="logo-icon">
+                <div class="chart-bars"><span></span><span></span><span></span><span></span></div>
+            </div>
+            <div class="header-title">
+                <h1>Forex Terminal</h1>
+                <p class="subtitle">6 Major Pairs &bull; Live Candlestick Charts</p>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="live-indicator"><span class="pulse-dot"></span> LIVE</div>
+            <div class="utc-clock">Manila <span class="time" id="utcTime">--:--:--</span></div>
+            <span class="market-badge market-open" id="marketBadge">Market Open</span>
+        </div>
+    </header>
+
+    <div class="controls-bar">
+        <span class="controls-label">🕒 Chart Timeframe</span>
+        <select id="timeframeSelector" class="timeframe-select">
+            <option value="15">15 Minutes</option>
+            <option value="30">30 Minutes</option>
+            <option value="60" selected>1 Hour</option>
+            <option value="240">4 Hours</option>
+        </select>
+        <span style="margin-left: auto; font-size:0.75rem; color: var(--text-secondary);">📅 Calendar & Journal below</span>
+    </div>
+
+    <div class="dashboard-grid" id="dashboardGrid"></div>
+
+    <section class="calendar-section">
+        <div class="calendar-card">
+            <div class="calendar-header">
+                <span style="font-size:1.2rem;">📅</span>
+                <h2>Economic Calendar</h2>
+            </div>
+            <div class="calendar-body">
+                <div class="tradingview-widget-container" id="tradingview-calendar-widget">
+                    <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-events.js" async>
+                    { "width": "100%", "height": "100%", "colorTheme": "dark", "currencies": ["EUR","USD","GBP","AUD","JPY","CHF","CAD"], "importance": "0,1,2", "locale": "en", "showCountryFlag": true, "showHeader": false, "dateRange": "today" }
+                    </script>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══ TRADING JOURNAL (No leverage, Exit optional) ═══ -->
+    <section class="journal-section">
+        <div class="journal-card">
+            <div class="journal-header">
+                <h2>📓 Trading Journal <span style="font-size:0.7rem; font-weight:400; color:var(--text-secondary);">(saved locally)</span></h2>
+                <button id="clearJournalBtn" class="journal-form delete-btn" style="padding:6px 14px; font-size:0.75rem;">Clear All</button>
+            </div>
+            <div class="journal-form" id="journalForm">
+                <select id="journalPair" required>
+                    <option value="">Select Pair</option>
+                    <option>EUR/USD</option><option>GBP/USD</option><option>AUD/USD</option>
+                    <option>USD/JPY</option><option>USD/CHF</option><option>USD/CAD</option>
+                </select>
+                <input type="date" id="journalDate" required />
+                <input type="time" id="journalTime" required />
+                <select id="journalDirection" required>
+                    <option value="Buy">Buy</option>
+                    <option value="Sell">Sell</option>
+                </select>
+                <input type="number" id="journalEntry" placeholder="Entry Price" step="0.00001" required />
+                <input type="number" id="journalExit" placeholder="Exit Price (optional)" step="0.00001" />
+                <input type="number" id="journalStopLoss" placeholder="Stop Loss" step="0.00001" />
+                <input type="number" id="journalTakeProfit" placeholder="Take Profit" step="0.00001" />
+                <input type="number" id="journalLotSize" placeholder="Lot Size" step="0.01" value="0.1" />
+                <input type="number" id="journalRisk" placeholder="Risk (USD)" step="0.01" />
+                <input type="text" id="journalNotes" placeholder="Notes (optional)" class="full-width" />
+                <button id="addJournalBtn" type="button">+ Add Trade</button>
+            </div>
+            <div class="journal-entries" id="journalEntries">
+                <div class="no-entries">No trades recorded yet. Add one above.</div>
+            </div>
+        </div>
+    </section>
+
+    <div class="page-footer">
+        Candlestick charts by TradingView &bull; created by: Kevin Hadjie Mendoza
+    </div>
+
+    <script src="https://s3.tradingview.com/tv.js"></script>
+    <script>
+        (() => {
+            // ─── CLOCK ─────────────────────────────────────────
+            const updateClock = () => {
+                const manila = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
+                const h = String(manila.getHours()).padStart(2,'0');
+                const m = String(manila.getMinutes()).padStart(2,'0');
+                const s = String(manila.getSeconds()).padStart(2,'0');
+                document.getElementById('utcTime').textContent = `${h}:${m}:${s}`;
+
+                const now = new Date();
+                const open = (now.getUTCDay() === 0 && now.getUTCHours() >= 22) ||
+                              (now.getUTCDay() >= 1 && now.getUTCDay() <= 4) ||
+                              (now.getUTCDay() === 5 && now.getUTCHours() < 22);
+                const badge = document.getElementById('marketBadge');
+                badge.textContent = open ? 'Market Open' : 'Market Closed';
+                badge.className = 'market-badge ' + (open ? 'market-open' : 'market-closed');
+            };
+            updateClock(); setInterval(updateClock, 1000);
+
+            // ─── CHARTS ────────────────────────────────────────
+            const PAIRS = [
+                { symbol: 'OANDA:EURUSD', containerId: 'chart_EURUSD', name: 'EUR/USD', flag: '🇪🇺🇺🇸', accent: 'accent-eur' },
+                { symbol: 'OANDA:GBPUSD', containerId: 'chart_GBPUSD', name: 'GBP/USD', flag: '🇬🇧🇺🇸', accent: 'accent-gbp' },
+                { symbol: 'OANDA:AUDUSD', containerId: 'chart_AUDUSD', name: 'AUD/USD', flag: '🇦🇺🇺🇸', accent: 'accent-aud' },
+                { symbol: 'OANDA:USDJPY', containerId: 'chart_USDJPY', name: 'USD/JPY', flag: '🇺🇸🇯🇵', accent: 'accent-jpy' },
+                { symbol: 'OANDA:USDCHF', containerId: 'chart_USDCHF', name: 'USD/CHF', flag: '🇺🇸🇨🇭', accent: 'accent-chf' },
+                { symbol: 'OANDA:USDCAD', containerId: 'chart_USDCAD', name: 'USD/CAD', flag: '🇺🇸🇨🇦', accent: 'accent-cad' }
+            ];
+
+            const grid = document.getElementById('dashboardGrid');
+            PAIRS.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'pair-card';
+                card.innerHTML = `
+                    <div class="card-accent ${p.accent}"></div>
+                    <div class="card-label"><span class="pair-name">${p.name}</span><span class="pair-flag">${p.flag}</span></div>
+                    <div class="chart-container" id="${p.containerId}"><div class="skeleton-loader"><div class="spinner"></div></div></div>
+                    <div style="padding: 0 14px 10px; display: flex; justify-content: flex-end;">
+                        <a href="https://www.tradingview.com/chart/?symbol=${encodeURIComponent(p.symbol)}" target="_blank" rel="noopener" class="view-full">📊 Full Chart</a>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            let chartWidgets = [], currentInterval = '60';
+            const destroyCharts = () => { chartWidgets.forEach(w => { try { w.remove(); } catch(_){} }); chartWidgets = []; };
+            const createChart = (containerId, symbol, interval) => {
+                const container = document.getElementById(containerId);
+                if (!container) return;
+                container.querySelector('.tradingview-widget-container')?.remove();
+                const sk = container.querySelector('.skeleton-loader');
+                if (sk) { sk.style.opacity = '0'; setTimeout(() => sk.remove(), 400); }
+                const div = document.createElement('div');
+                div.className = 'tradingview-widget-container';
+                div.style.height = '100%'; div.style.width = '100%';
+                container.appendChild(div);
+                const uid = 'tv_' + containerId + '_' + Date.now();
+                div.id = uid;
+                try {
+                    return new TradingView.widget({
+                        container_id: uid, width: '100%', height: '100%',
+                        symbol, interval, timezone: 'Etc/UTC', theme: 'dark', style: '1',
+                        locale: 'en', toolbar_bg: '#f1f3f6', enable_publishing: false,
+                        hide_top_toolbar: true, hide_side_toolbar: true, allow_symbol_change: false,
+                        save_image: false, studies: [], show_popup_button: false,
+                        popup_width: '1000', popup_height: '650', details: false, hotlist: false, calendar: false
+                    });
+                } catch(e) { console.warn(e); return null; }
+            };
+            const loadCharts = (interval) => {
+                destroyCharts();
+                PAIRS.forEach(p => {
+                    const c = document.getElementById(p.containerId);
+                    if (c) {
+                        let sk = c.querySelector('.skeleton-loader');
+                        if (!sk) { sk = document.createElement('div'); sk.className = 'skeleton-loader'; sk.innerHTML = '<div class="spinner"></div>'; c.appendChild(sk); }
+                        sk.style.display = 'flex'; sk.style.opacity = '1';
+                    }
+                });
+                PAIRS.forEach((p, i) => setTimeout(() => {
+                    const w = createChart(p.containerId, p.symbol, interval);
+                    if (w) chartWidgets.push(w);
+                }, i * 180));
+            };
+            document.getElementById('timeframeSelector').addEventListener('change', e => {
+                if (e.target.value !== currentInterval) { currentInterval = e.target.value; loadCharts(currentInterval); }
+            });
+
+            // ─── TRADING JOURNAL (No leverage, Exit optional) ────
+            const STORAGE_KEY = 'forex_terminal_journal_simple';
+            let entries = [];
+
+            const loadJournal = () => {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                entries = raw ? JSON.parse(raw) : [];
+                renderJournal();
+            };
+            const saveJournal = () => { localStorage.setItem(STORAGE_KEY, JSON.stringify(entries)); renderJournal(); };
+
+            const renderJournal = () => {
+                const container = document.getElementById('journalEntries');
+                if (entries.length === 0) {
+                    container.innerHTML = '<div class="no-entries">No trades recorded yet. Add one above.</div>';
+                    return;
+                }
+                container.innerHTML = entries.slice().reverse().map(e => {
+                    const exitDisplay = e.exit ? e.exit : '—';
+                    const stopLossDisplay = e.stopLoss ? `SL ${e.stopLoss}` : '';
+                    const takeProfitDisplay = e.takeProfit ? `TP ${e.takeProfit}` : '';
+                    const lotDisplay = e.lotSize ? `Lot ${e.lotSize}` : '';
+                    return `
+                        <div class="journal-entry" id="entry-${e.id}">
+                            <span class="entry-pair">${e.pair}</span>
+                            <span class="entry-direction ${e.direction.toLowerCase()}">${e.direction}</span>
+                            <span class="entry-details">
+                                <span>${e.date} ${e.time}</span>
+                                <span>Entry <strong>${e.entry}</strong></span>
+                                <span>Exit <strong>${exitDisplay}</strong></span>
+                                ${stopLossDisplay ? `<span>${stopLossDisplay}</span>` : ''}
+                                ${takeProfitDisplay ? `<span>${takeProfitDisplay}</span>` : ''}
+                                ${lotDisplay ? `<span>${lotDisplay}</span>` : ''}
+                            </span>
+                            ${e.risk ? `<span class="entry-risk">💰 $${parseFloat(e.risk).toFixed(2)}</span>` : ''}
+                            <span class="entry-notes" title="${e.notes}">${e.notes || '—'}</span>
+                            <span class="entry-actions">
+                                <button onclick="deleteJournalEntry(${e.id})">🗑 Delete</button>
+                            </span>
+                        </div>`;
+                }).join('');
+            };
+
+            document.getElementById('addJournalBtn').addEventListener('click', () => {
+                const pair = document.getElementById('journalPair').value;
+                const date = document.getElementById('journalDate').value;
+                const time = document.getElementById('journalTime').value;
+                const direction = document.getElementById('journalDirection').value;
+                const entry = document.getElementById('journalEntry').value;
+                const exit = document.getElementById('journalExit').value;
+                const stopLoss = document.getElementById('journalStopLoss').value || '';
+                const takeProfit = document.getElementById('journalTakeProfit').value || '';
+                const lotSize = document.getElementById('journalLotSize').value || '';
+                const risk = document.getElementById('journalRisk').value || '';
+                const notes = document.getElementById('journalNotes').value.trim();
+
+                if (!pair || !date || !time || !entry) {
+                    alert('Please fill at least: Pair, Date, Time, Entry Price.');
+                    return;
+                }
+                entries.push({
+                    id: Date.now(),
+                    pair, date, time, direction, entry, exit, stopLoss, takeProfit, lotSize, risk, notes
+                });
+                saveJournal();
+                document.getElementById('journalForm').reset();
+                document.getElementById('journalDate').valueAsDate = new Date();
+                document.getElementById('journalTime').value = new Date().toTimeString().slice(0,5);
+                document.getElementById('journalLotSize').value = '0.1';
+            });
+
+            window.deleteJournalEntry = (id) => {
+                if (confirm('Remove this trade?')) {
+                    entries = entries.filter(e => e.id !== id);
+                    saveJournal();
+                }
+            };
+
+            document.getElementById('clearJournalBtn').addEventListener('click', () => {
+                if (entries.length === 0) return;
+                if (confirm('Delete ALL journal entries?')) { entries = []; saveJournal(); }
+            });
+
+            document.getElementById('journalDate').valueAsDate = new Date();
+            document.getElementById('journalTime').value = new Date().toTimeString().slice(0,5);
+
+            loadJournal();
+
+            const initCharts = () => {
+                if (typeof TradingView !== 'undefined' && TradingView.widget) loadCharts(currentInterval);
+                else setTimeout(initCharts, 250);
+            };
+            window.addEventListener('load', () => {
+                initCharts();
+                setTimeout(() => document.querySelectorAll('.skeleton-loader').forEach(el => el.remove()), 18000);
+            });
+        })();
+    </script>
+</body>
+</html>
