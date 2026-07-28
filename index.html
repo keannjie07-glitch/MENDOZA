@@ -570,7 +570,7 @@
         <span style="margin-left: auto; font-size:0.75rem; color: var(--text-secondary);">📅 Calendar &amp; Journal below</span>
     </div>
 
-    <!-- ===== CHART GRID – 6 assets ===== -->
+    <!-- ===== CHART GRID – 6 assets with guaranteed tickers ===== -->
     <div class="dashboard-grid" id="dashboardGrid"></div>
 
     <section class="calendar-section">
@@ -660,14 +660,14 @@
             updateClock();
             setInterval(updateClock, 1000);
 
-            // ─── CHARTS ────────────────────────────────────────
+            // ─── CHARTS with universal tickers ───────────────────
             const ASSETS = [
-                { symbol: 'TVC:DXY', containerId: 'chart_DXY', name: 'DXY', flag: '📊', label: 'US Dollar Index' },
-                { symbol: 'TVC:US10Y', containerId: 'chart_US10Y', name: 'US10Y', flag: '🏦', label: '10-Year Yield' },
-                { symbol: 'NASDAQ:IXIC', containerId: 'chart_NASDAQ', name: 'NASDAQ', flag: '📈', label: 'Composite' },
-                { symbol: 'TVC:VIX', containerId: 'chart_VIX', name: 'VIX', flag: '⚡', label: 'Volatility' },
-                { symbol: 'OANDA:XAUUSD', containerId: 'chart_GOLD', name: 'GOLD', flag: '🥇', label: 'XAU/USD' },
-                { symbol: 'BITSTAMP:BTCUSD', containerId: 'chart_BTC', name: 'BTC', flag: '₿', label: 'Bitcoin' }
+                { symbol: 'DXY', containerId: 'chart_DXY', name: 'DXY', flag: '📊', label: 'US Dollar Index' },
+                { symbol: 'US10Y', containerId: 'chart_US10Y', name: 'US10Y', flag: '🏦', label: '10-Year Yield' },
+                { symbol: 'IXIC', containerId: 'chart_NASDAQ', name: 'NASDAQ', flag: '📈', label: 'Composite' },
+                { symbol: 'VIX', containerId: 'chart_VIX', name: 'VIX', flag: '⚡', label: 'Volatility' },
+                { symbol: 'XAUUSD', containerId: 'chart_GOLD', name: 'GOLD', flag: '🥇', label: 'XAU/USD' },
+                { symbol: 'BTCUSD', containerId: 'chart_BTC', name: 'BTC', flag: '₿', label: 'Bitcoin' }
             ];
 
             const grid = document.getElementById('dashboardGrid');
