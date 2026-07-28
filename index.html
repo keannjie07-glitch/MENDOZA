@@ -253,7 +253,6 @@
             color: #fff;
         }
 
-        /* ===== CHARTS GRID – No border frames ===== */
         .dashboard-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -278,7 +277,6 @@
             }
         }
 
-        /* Chart card – completely borderless, frameless */
         .pair-card {
             background: transparent;
             border: none !important;
@@ -295,7 +293,6 @@
             border: none !important;
         }
 
-        /* No accent bar */
         .card-accent {
             display: none !important;
         }
@@ -311,13 +308,26 @@
             font-size: 0.85rem;
             color: #fff;
             letter-spacing: 0.3px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .pair-name .edit-symbol {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            opacity: 0.5;
+            transition: opacity 0.2s;
+        }
+        .pair-name .edit-symbol:hover {
+            opacity: 1;
+            color: var(--accent-blue);
         }
         .pair-flag {
             font-size: 1rem;
             opacity: 0.7;
         }
 
-        /* Chart container – completely frameless */
         .chart-container {
             flex: 1;
             min-height: 280px;
@@ -328,7 +338,6 @@
             border: none !important;
             box-shadow: none !important;
         }
-        /* Remove any possible iframe border */
         .chart-container iframe,
         .chart-container .tradingview-widget-container iframe {
             border: none !important;
@@ -359,7 +368,6 @@
             }
         }
 
-        /* Full-chart link – subtle, minimal */
         .view-full {
             display: inline-block;
             margin-top: 6px;
@@ -539,6 +547,14 @@
             color: var(--text-secondary);
             opacity: 0.6;
         }
+
+        /* tooltip for symbol edit */
+        .symbol-hint {
+            font-size: 0.6rem;
+            color: var(--text-secondary);
+            opacity: 0.6;
+            margin-left: 4px;
+        }
     </style>
 </head>
 <body>
@@ -567,10 +583,11 @@
             <option value="60" selected>1 Hour</option>
             <option value="240">4 Hours</option>
         </select>
-        <span style="margin-left: auto; font-size:0.75rem; color: var(--text-secondary);">📅 Calendar &amp; Journal below</span>
+        <span style="margin-left: auto; font-size:0.75rem; color: var(--text-secondary);">
+            ✏️ Click symbol name to change ticker
+        </span>
     </div>
 
-    <!-- ===== CHART GRID – 6 assets with guaranteed tickers ===== -->
     <div class="dashboard-grid" id="dashboardGrid"></div>
 
     <section class="calendar-section">
@@ -599,7 +616,6 @@
         </div>
     </section>
 
-    <!-- ═══ TRADING JOURNAL ═══ -->
     <section class="journal-section">
         <div class="journal-card">
             <div class="journal-header">
@@ -660,62 +676,123 @@
             updateClock();
             setInterval(updateClock, 1000);
 
-            // ─── CHARTS with universal tickers ───────────────────
-            const ASSETS = [
-                { symbol: 'DXY', containerId: 'chart_DXY', name: 'DXY', flag: '📊', label: 'US Dollar Index' },
-                { symbol: 'US10Y', containerId: 'chart_US10Y', name: 'US10Y', flag: '🏦', label: '10-Year Yield' },
-                { symbol: 'IXIC', containerId: 'chart_NASDAQ', name: 'NASDAQ', flag: '📈', label: 'Composite' },
-                { symbol: 'VIX', containerId: 'chart_VIX', name: 'VIX', flag: '⚡', label: 'Volatility' },
-                { symbol: 'XAUUSD', containerId: 'chart_GOLD', name: 'GOLD', flag: '🥇', label: 'XAU/USD' },
-                { symbol: 'BTCUSD', containerId: 'chart_BTC', name: 'BTC', flag: '₿', label: 'Bitcoin' }
+            // ─── CHARTS with editable symbols ──────────────────
+            // Default symbols – these should work, but user can change.
+            const DEFAULT_ASSETS = [
+                { id: 'DXY', defaultSymbol: 'DXY', name: 'DXY', flag: '📊', label: 'US Dollar Index' },
+                { id: 'US10Y', defaultSymbol: 'US10Y', name: 'US10Y', flag: '🏦', label: '10-Year Yield' },
+                { id: 'NASDAQ', defaultSymbol: 'IXIC', name: 'NASDAQ', flag: '📈', label: 'Composite' },
+                { id: 'VIX', defaultSymbol: 'VIX', name: 'VIX', flag: '⚡', label: 'Volatility' },
+                { id: 'GOLD', defaultSymbol: 'XAUUSD', name: 'GOLD', flag: '🥇', label: 'XAU/USD' },
+                { id: 'BTC', defaultSymbol: 'BTCUSD', name: 'BTC', flag: '₿', label: 'Bitcoin' }
             ];
 
+            // Load custom symbols from localStorage
+            const SYMBOL_STORAGE_KEY = 'forex_terminal_custom_symbols';
+            let customSymbols = {};
+            try {
+                const stored = localStorage.getItem(SYMBOL_STORAGE_KEY);
+                if (stored) customSymbols = JSON.parse(stored);
+            } catch (_) {}
+
+            const getSymbolFor = (assetId) => {
+                return customSymbols[assetId] || DEFAULT_ASSETS.find(a => a.id === assetId).defaultSymbol;
+            };
+
+            const setSymbolFor = (assetId, newSymbol) => {
+                customSymbols[assetId] = newSymbol;
+                localStorage.setItem(SYMBOL_STORAGE_KEY, JSON.stringify(customSymbols));
+            };
+
+            // Build grid
             const grid = document.getElementById('dashboardGrid');
-            ASSETS.forEach(a => {
+            const assetCards = {};
+
+            DEFAULT_ASSETS.forEach(asset => {
                 const card = document.createElement('div');
                 card.className = 'pair-card';
+                card.dataset.assetId = asset.id;
+                const containerId = 'chart_' + asset.id;
                 card.innerHTML = `
                         <div class="card-label">
-                            <span class="pair-name">${a.name} <span style="font-weight:400;color:var(--text-secondary);font-size:0.7rem;">${a.label}</span></span>
-                            <span class="pair-flag">${a.flag}</span>
+                            <span class="pair-name">
+                                ${asset.name}
+                                <span class="edit-symbol" title="Change symbol">✏️</span>
+                                <span class="symbol-hint">${getSymbolFor(asset.id)}</span>
+                            </span>
+                            <span class="pair-flag">${asset.flag}</span>
                         </div>
-                        <div class="chart-container" id="${a.containerId}">
+                        <div class="chart-container" id="${containerId}">
                             <div class="skeleton-loader"><div class="spinner"></div></div>
                         </div>
                         <div style="padding: 4px 0 0 0; display: flex; justify-content: flex-start;">
-                            <a href="https://www.tradingview.com/chart/?symbol=${encodeURIComponent(a.symbol)}" target="_blank" rel="noopener" class="view-full">📊 Full Chart</a>
+                            <a href="https://www.tradingview.com/chart/?symbol=${encodeURIComponent(getSymbolFor(asset.id))}" target="_blank" rel="noopener" class="view-full">📊 Full Chart</a>
                         </div>
                     `;
                 grid.appendChild(card);
+                assetCards[asset.id] = {
+                    element: card,
+                    containerId: containerId,
+                    currentSymbol: getSymbolFor(asset.id),
+                    defaultSymbol: asset.defaultSymbol,
+                    name: asset.name,
+                    flag: asset.flag,
+                    label: asset.label
+                };
             });
 
-            let chartWidgets = [],
-                currentInterval = '60';
-            const destroyCharts = () => {
-                chartWidgets.forEach(w => { try { w.remove(); } catch (_) {} });
-                chartWidgets = [];
+            // ─── Chart widget management ──────────────────────
+            let chartWidgets = {};
+            let currentInterval = '60';
+
+            const destroyChart = (assetId) => {
+                if (chartWidgets[assetId]) {
+                    try { chartWidgets[assetId].remove(); } catch (_) {}
+                    delete chartWidgets[assetId];
+                }
+                const container = document.getElementById(assetCards[assetId].containerId);
+                if (container) {
+                    const oldWidgetDiv = container.querySelector('.tradingview-widget-container');
+                    if (oldWidgetDiv) oldWidgetDiv.remove();
+                    // show skeleton
+                    let sk = container.querySelector('.skeleton-loader');
+                    if (!sk) {
+                        sk = document.createElement('div');
+                        sk.className = 'skeleton-loader';
+                        sk.innerHTML = '<div class="spinner"></div>';
+                        container.appendChild(sk);
+                    }
+                    sk.style.display = 'flex';
+                    sk.style.opacity = '1';
+                }
             };
-            const createChart = (containerId, symbol, interval) => {
-                const container = document.getElementById(containerId);
+
+            const createChart = (assetId, symbol, interval) => {
+                const container = document.getElementById(assetCards[assetId].containerId);
                 if (!container) return;
-                container.querySelector('.tradingview-widget-container')?.remove();
+                // remove old widget container
+                const old = container.querySelector('.tradingview-widget-container');
+                if (old) old.remove();
+                // hide skeleton
                 const sk = container.querySelector('.skeleton-loader');
                 if (sk) { sk.style.opacity = '0';
                     setTimeout(() => sk.remove(), 400); }
+
                 const div = document.createElement('div');
                 div.className = 'tradingview-widget-container';
                 div.style.height = '100%';
                 div.style.width = '100%';
                 container.appendChild(div);
-                const uid = 'tv_' + containerId + '_' + Date.now();
+                const uid = 'tv_' + assetId + '_' + Date.now();
                 div.id = uid;
+
                 try {
-                    return new TradingView.widget({
+                    const widget = new TradingView.widget({
                         container_id: uid,
                         width: '100%',
                         height: '100%',
-                        symbol,
-                        interval,
+                        symbol: symbol,
+                        interval: interval,
                         timezone: 'Etc/UTC',
                         theme: 'dark',
                         style: '1',
@@ -734,30 +811,73 @@
                         hotlist: false,
                         calendar: false
                     });
-                } catch (e) { console.warn(e); return null; }
+                    chartWidgets[assetId] = widget;
+                    // Update the hint and full chart link
+                    const hint = container.closest('.pair-card').querySelector('.symbol-hint');
+                    if (hint) hint.textContent = symbol;
+                    const fullLink = container.closest('.pair-card').querySelector('.view-full');
+                    if (fullLink) fullLink.href = `https://www.tradingview.com/chart/?symbol=${encodeURIComponent(symbol)}`;
+                    return widget;
+                } catch (e) {
+                    console.warn('Chart error for', assetId, e);
+                    // show error message in container
+                    const errMsg = document.createElement('div');
+                    errMsg.style.cssText =
+                        'display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);font-size:0.8rem;text-align:center;padding:10px;';
+                    errMsg.textContent = `⚠️ Could not load "${symbol}". Click ✏️ to change symbol.`;
+                    container.appendChild(errMsg);
+                    return null;
+                }
             };
-            const loadCharts = (interval) => {
-                destroyCharts();
-                ASSETS.forEach(a => {
-                    const c = document.getElementById(a.containerId);
-                    if (c) {
-                        let sk = c.querySelector('.skeleton-loader');
-                        if (!sk) { sk = document.createElement('div');
-                            sk.className = 'skeleton-loader';
-                            sk.innerHTML = '<div class="spinner"></div>';
-                            c.appendChild(sk); }
-                        sk.style.display = 'flex';
-                        sk.style.opacity = '1';
-                    }
+
+            const loadAllCharts = (interval) => {
+                // Destroy all existing charts
+                Object.keys(chartWidgets).forEach(id => destroyChart(id));
+                // Create each with current symbol
+                DEFAULT_ASSETS.forEach(asset => {
+                    const symbol = getSymbolFor(asset.id);
+                    setTimeout(() => {
+                        createChart(asset.id, symbol, interval);
+                    }, 100); // small delay to avoid race
                 });
-                ASSETS.forEach((a, i) => setTimeout(() => {
-                    const w = createChart(a.containerId, a.symbol, interval);
-                    if (w) chartWidgets.push(w);
-                }, i * 180));
             };
-            document.getElementById('timeframeSelector').addEventListener('change', e => {
-                if (e.target.value !== currentInterval) { currentInterval = e.target.value;
-                    loadCharts(currentInterval); }
+
+            // ─── Edit symbol handler ──────────────────────────
+            document.addEventListener('click', (e) => {
+                const editBtn = e.target.closest('.edit-symbol');
+                if (!editBtn) return;
+                const card = editBtn.closest('.pair-card');
+                if (!card) return;
+                const assetId = card.dataset.assetId;
+                if (!assetId) return;
+                const current = getSymbolFor(assetId);
+                const newSymbol = prompt(`Enter new TradingView symbol for ${assetId}:`, current);
+                if (newSymbol && newSymbol.trim() !== '') {
+                    const trimmed = newSymbol.trim();
+                    setSymbolFor(assetId, trimmed);
+                    // Update hint
+                    const hint = card.querySelector('.symbol-hint');
+                    if (hint) hint.textContent = trimmed;
+                    // Reload this chart
+                    destroyChart(assetId);
+                    createChart(assetId, trimmed, currentInterval);
+                }
+            });
+
+            // ─── Timeframe change ─────────────────────────────
+            document.getElementById('timeframeSelector').addEventListener('change', (e) => {
+                const newInterval = e.target.value;
+                if (newInterval !== currentInterval) {
+                    currentInterval = newInterval;
+                    // Reload all charts with new interval (keep symbols)
+                    Object.keys(chartWidgets).forEach(id => destroyChart(id));
+                    DEFAULT_ASSETS.forEach(asset => {
+                        const symbol = getSymbolFor(asset.id);
+                        setTimeout(() => {
+                            createChart(asset.id, symbol, currentInterval);
+                        }, 100);
+                    });
+                }
             });
 
             // ─── TRADING JOURNAL ──────────────────────────────
@@ -860,14 +980,24 @@
 
             loadJournal();
 
+            // ─── INIT ──────────────────────────────────────────
             const initCharts = () => {
-                if (typeof TradingView !== 'undefined' && TradingView.widget) loadCharts(currentInterval);
-                else setTimeout(initCharts, 250);
+                if (typeof TradingView !== 'undefined' && TradingView.widget) {
+                    loadAllCharts(currentInterval);
+                } else {
+                    setTimeout(initCharts, 250);
+                }
             };
+
             window.addEventListener('load', () => {
                 initCharts();
-                setTimeout(() => document.querySelectorAll('.skeleton-loader').forEach(el => el.remove()), 18000);
+                // remove skeletons after a timeout if they persist
+                setTimeout(() => {
+                    document.querySelectorAll('.skeleton-loader').forEach(el => el.remove());
+                }, 12000);
             });
+
+            // Also reload charts if user changes symbol – already handled by click.
         })();
     </script>
 </body>
