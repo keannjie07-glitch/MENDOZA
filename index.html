@@ -178,6 +178,22 @@
             background: rgba(2, 132, 199, 0.08); border-color: rgba(2, 132, 199, 0.25);
             color: var(--accent-blue);
         }
+        .panel-header-actions {
+            display: flex; align-items: center; gap: 8px;
+        }
+        .panel-icon-btn {
+            background: var(--bg-panel); border: 1px solid var(--border-subtle);
+            height: 26px; min-width: 26px; padding: 0; border-radius: 6px;
+            display: inline-flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--text-secondary); transition: all 0.15s ease;
+            font-family: var(--font-sans);
+        }
+        .panel-icon-btn:hover {
+            border-color: var(--border-strong); color: var(--text-primary);
+            background: var(--bg-hover);
+        }
+        .panel-icon-btn:active { transform: scale(0.94); }
+        .panel-icon-btn svg { width: 14px; height: 14px; }
 
         .pulse-grid {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -379,9 +395,48 @@
         .calendar-widget-container { flex: 1; min-height: 0; width: 100%; position: relative; }
         .calendar-widget-container iframe { width: 100%; height: 100%; border: none; display: block; position: absolute; top: 0; left: 0; }
 
+        /* ============================================================
+           BOOKMAP + FULLSCREEN MODE
+           ============================================================ */
         .bookmap-panel { height: 460px; display: flex; flex-direction: column; }
-        #bookmap-container { flex: 1; width: 100%; min-height: 0; }
+        #bookmap-container { flex: 1; width: 100%; min-height: 0; position: relative; }
         #bookmap-container iframe { width: 100%; height: 100%; border: none; display: block; }
+
+        /* Native fullscreen state */
+        .bookmap-panel:fullscreen,
+        .bookmap-panel:-webkit-full-screen {
+            width: 100vw !important;
+            height: 100vh !important;
+            border-radius: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
+            margin: 0 !important;
+            background: var(--bg-panel);
+        }
+        .bookmap-panel:fullscreen #bookmap-container,
+        .bookmap-panel:-webkit-full-screen #bookmap-container {
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* CSS fallback for iOS Safari (no native fullscreen on non-video) */
+        .bookmap-panel.bookmap-fullscreen-fallback {
+            position: fixed !important;
+            top: 0 !important; left: 0 !important;
+            right: 0 !important; bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            height: 100dvh !important;
+            z-index: 9999 !important;
+            border-radius: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
+            margin: 0 !important;
+            background: var(--bg-panel);
+        }
+        body.bookmap-fs-active {
+            overflow: hidden !important;
+        }
 
         .notes-tabs {
             display: flex; gap: 2px; padding: 0 12px; background: var(--bg-elevated);
@@ -481,47 +536,29 @@
         }
         @keyframes shimmer { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
 
-        /* ============================================================
-           RESPONSIVE — TABLET
-           ============================================================ */
         @media (max-width: 1200px) {
             .chart-row { grid-template-columns: 1fr 300px; }
             .tools-row { grid-template-columns: 1fr 1fr; }
             .technical-analysis-panel { grid-column: span 2; }
         }
-
         @media (max-width: 1000px) {
             .chart-row { grid-template-columns: 1fr; }
             .sidebar-stack { flex-direction: row; height: auto; }
             .derivatives-widget, .news-widget { flex: 1; min-height: 280px; }
             .bottom-row { grid-template-columns: 1fr; }
         }
-
-        /* ============================================================
-           RESPONSIVE — LARGE PHONE / SMALL TABLET
-           Chart & Bookmap enlarged for readability
-           ============================================================ */
         @media (max-width: 768px) {
             .dashboard { padding: 0 16px; gap: 16px; }
             header { padding: 14px 16px 8px; }
-
-            /* Chart: fills most of viewport height */
-            .chart-wrapper { height: clamp(440px, 68vh, 640px); }
-
-            /* Bookmap: much taller for readable heatmap */
-            .bookmap-panel { height: 500px; }
-
+            .chart-wrapper { height: clamp(350px, 55vh, 480px); }
             .sidebar-stack { flex-direction: column; }
             .tools-row { grid-template-columns: 1fr; }
             .technical-analysis-panel { grid-column: span 1; }
-            .trade-panel { height: 380px; }
-            .calendar-panel { height: 420px; }
+            .trade-panel { height: 340px; }
+            .calendar-panel { height: 380px; }
+            .bookmap-panel { height: 340px; }
             .notes-content { padding: 16px 18px; }
         }
-
-        /* ============================================================
-           RESPONSIVE — PHONE (portrait)
-           ============================================================ */
         @media (max-width: 600px) {
             .dashboard { padding: 0 12px; gap: 14px; }
             header {
@@ -537,13 +574,6 @@
             .pulse-card { padding: 12px 14px; }
             .pulse-card .pulse-value { font-size: 1.25rem; }
             .panel-header { padding: 11px 14px; }
-
-            /* Chart: bigger than before — dominant panel on phone */
-            .chart-wrapper { height: clamp(460px, 72vh, 660px); }
-
-            /* Bookmap: tall, readable */
-            .bookmap-panel { height: 540px; }
-
             .trade-row {
                 grid-template-columns: 60px 40px minmax(74px, 1fr) minmax(52px, 1fr) minmax(72px, 1fr);
                 gap: 4px; padding: 6px 10px; font-size: 10.5px;
@@ -555,10 +585,6 @@
             .site-footer { padding: 16px 14px; }
             .calc-field input { font-size: 16px; }
         }
-
-        /* ============================================================
-           RESPONSIVE — SMALL PHONE
-           ============================================================ */
         @media (max-width: 480px) {
             .dashboard { padding: 0 10px; gap: 12px; }
             .ticker-bar { padding: 0 10px; }
@@ -572,20 +598,13 @@
             .pulse-card .pulse-value { font-size: 1.1rem; }
             .panel-header { font-size: 11px; letter-spacing: 0.01em; }
             .panel-header .badge { font-size: 9px; padding: 1px 6px; }
-
-            /* Chart: still huge on small phones */
-            .chart-wrapper { height: clamp(440px, 70vh, 620px); }
-
-            /* Bookmap: comfortably readable */
-            .bookmap-panel { height: 500px; }
-
-            .calendar-panel { height: 400px; }
-            .trade-panel { height: 340px; }
-
             .trade-row {
                 grid-template-columns: 50px 34px minmax(66px, 1fr) minmax(44px, 1fr) minmax(64px, 1fr);
                 gap: 3px; padding: 5px 8px; font-size: 10px;
             }
+            .bookmap-panel { height: 300px; }
+            .calendar-panel { height: 360px; }
+            .trade-panel { height: 320px; }
             .notes-content { padding: 14px 14px; }
             .notes-content p, .notes-content li { font-size: 12.5px; }
             .notes-content h4 { font-size: 0.95rem; }
@@ -598,10 +617,6 @@
             .calc-body { padding: 12px 12px; }
             .site-footer { font-size: 10px; padding: 14px 12px; gap: 8px; }
         }
-
-        /* ============================================================
-           RESPONSIVE — VERY SMALL PHONE (Galaxy Fold, etc.)
-           ============================================================ */
         @media (max-width: 380px) {
             .dashboard { padding: 0 8px; gap: 10px; }
             .ticker-item { padding: 0 7px; }
@@ -610,13 +625,6 @@
             .pulse-card { padding: 10px 11px; }
             .pulse-card .pulse-label { font-size: 10px; }
             .pulse-card .pulse-value { font-size: 1.05rem; }
-
-            /* Chart: keep it dominant even on Fold */
-            .chart-wrapper { height: clamp(400px, 65vh, 560px); }
-
-            /* Bookmap: still tall enough to see liquidity bands */
-            .bookmap-panel { height: 460px; }
-
             .trade-feed { overflow-x: auto; }
             .trade-row {
                 min-width: 310px;
@@ -625,14 +633,10 @@
             }
             .trade-row.header { min-width: 310px; }
         }
-
-        /* ============================================================
-           RESPONSIVE — PHONE LANDSCAPE (short viewport)
-           ============================================================ */
         @media (max-height: 500px) and (orientation: landscape) {
-            .chart-wrapper { height: 380px; }
-            .bookmap-panel { height: 340px; }
-            .trade-panel, .calendar-panel { height: 300px; }
+            .chart-wrapper { height: 300px; }
+            .bookmap-panel { height: 260px; }
+            .trade-panel, .calendar-panel { height: 280px; }
         }
     </style>
 </head>
@@ -823,10 +827,24 @@
             </div>
         </div>
 
-        <div class="panel bookmap-panel">
+        <!-- BOOKMAP with fullscreen / landscape toggle -->
+        <div class="panel bookmap-panel" id="bookmap-panel">
             <div class="panel-header">
                 <span>Liquidity Heatmap — BTC/USD Spot</span>
-                <span class="badge">Bookmap</span>
+                <div class="panel-header-actions">
+                    <span class="badge">Bookmap</span>
+                    <button class="panel-icon-btn" id="bookmap-fullscreen-btn" type="button"
+                            title="Fullscreen / Landscape (F)" aria-label="Toggle fullscreen landscape">
+                        <svg class="icon-expand" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                        </svg>
+                        <svg class="icon-contract" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+                            <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
             <div id="bookmap-container"></div>
         </div>
@@ -897,6 +915,127 @@
             document.querySelector('#bookmap-container').innerHTML =
                 '<p style="padding:20px;color:var(--text-secondary);text-align:center;">Unable to load Bookmap heatmap.</p>';
         }
+    </script>
+
+    <!-- ============================================================
+         BOOKMAP FULLSCREEN / LANDSCAPE TOGGLE
+         - Native Fullscreen API where supported
+         - CSS fallback for iOS Safari (no native fullscreen on div)
+         - Attempts landscape orientation lock on mobile
+         - Keyboard shortcut: F to toggle, Esc to exit
+         ============================================================ -->
+    <script>
+        (() => {
+            const panel = document.getElementById('bookmap-panel');
+            const btn = document.getElementById('bookmap-fullscreen-btn');
+            if (!panel || !btn) return;
+
+            const iconExpand = btn.querySelector('.icon-expand');
+            const iconContract = btn.querySelector('.icon-contract');
+
+            function updateIcon(isFull) {
+                if (iconExpand) iconExpand.style.display = isFull ? 'none' : '';
+                if (iconContract) iconContract.style.display = isFull ? '' : 'none';
+                btn.title = isFull ? 'Exit fullscreen (Esc or F)' : 'Fullscreen / Landscape (F)';
+                btn.setAttribute('aria-pressed', isFull ? 'true' : 'false');
+            }
+
+            function isNativeFull() {
+                return document.fullscreenElement === panel ||
+                       document.webkitFullscreenElement === panel;
+            }
+
+            function isFallbackFull() {
+                return panel.classList.contains('bookmap-fullscreen-fallback');
+            }
+
+            function isFull() { return isNativeFull() || isFallbackFull(); }
+
+            async function tryLandscapeLock() {
+                try {
+                    if (screen.orientation && typeof screen.orientation.lock === 'function') {
+                        await screen.orientation.lock('landscape');
+                    }
+                } catch (_) { /* not supported or permission denied — silent */ }
+            }
+
+            function unlockOrientation() {
+                try {
+                    if (screen.orientation && typeof screen.orientation.unlock === 'function') {
+                        screen.orientation.unlock();
+                    }
+                } catch (_) {}
+            }
+
+            async function enterFullscreen() {
+                // 1. Try native fullscreen first (best UX — hides browser chrome)
+                const req = panel.requestFullscreen || panel.webkitRequestFullscreen ||
+                            panel.mozRequestFullScreen || panel.msRequestFullscreen;
+                if (req) {
+                    try {
+                        await req.call(panel);
+                        await tryLandscapeLock();
+                        updateIcon(true);
+                        if (window.innerWidth <= 768 && window.innerHeight > window.innerWidth) {
+                            window.showToast?.('Rotate device to landscape for best view', 'info', 3000);
+                        }
+                        return;
+                    } catch (e) {
+                        console.warn('Native fullscreen failed, using CSS fallback:', e);
+                    }
+                }
+
+                // 2. CSS fallback (iOS Safari, restricted browsers)
+                panel.classList.add('bookmap-fullscreen-fallback');
+                document.body.classList.add('bookmap-fs-active');
+                await tryLandscapeLock();
+                updateIcon(true);
+                if (window.innerWidth <= 768 && window.innerHeight > window.innerWidth) {
+                    window.showToast?.('Rotate device to landscape for best view', 'info', 3000);
+                }
+            }
+
+            async function exitFullscreen() {
+                if (document.fullscreenElement || document.webkitFullscreenElement) {
+                    try {
+                        const exit = document.exitFullscreen || document.webkitExitFullscreen ||
+                                     document.mozCancelFullScreen || document.msExitFullscreen;
+                        if (exit) await exit.call(document);
+                    } catch (_) {}
+                }
+                panel.classList.remove('bookmap-fullscreen-fallback');
+                document.body.classList.remove('bookmap-fs-active');
+                unlockOrientation();
+                updateIcon(false);
+            }
+
+            function toggleFullscreen() {
+                if (isFull()) exitFullscreen();
+                else enterFullscreen();
+            }
+
+            btn.addEventListener('click', toggleFullscreen);
+
+            // Keep icon in sync when browser changes fullscreen state (e.g. Esc key)
+            document.addEventListener('fullscreenchange', () => updateIcon(isFull()));
+            document.addEventListener('webkitfullscreenchange', () => updateIcon(isFull()));
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                const tag = (e.target.tagName || '').toLowerCase();
+                if (tag === 'input' || tag === 'textarea') return;
+
+                if (e.key === 'Escape' && isFallbackFull()) {
+                    exitFullscreen();
+                } else if ((e.key === 'f' || e.key === 'F') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                    e.preventDefault();
+                    toggleFullscreen();
+                }
+            });
+
+            // Safety: if user resizes window back to portrait while in fallback fullscreen,
+            // keep it full — user can exit with Esc or the button
+        })();
     </script>
 
     <script>
@@ -1296,7 +1435,7 @@
                         <li><strong>Technical Analysis:</strong> TradingView's official gauge showing the current Strong Buy / Strong Sell rating backed by oscillators and moving averages.</li>
                         <li><strong>Large Trades:</strong> Real-time whale trade feed — every Binance BTCUSDT aggregate trade above $100K.</li>
                         <li><strong>Economic Calendar:</strong> High-impact events only (CPI, NFP, FOMC, etc.) in Philippine Time.</li>
-                        <li><strong>Liquidity Heatmap:</strong> Bookmap visualization of resting liquidity — where stop hunts and squeezes typically originate.</li>
+                        <li><strong>Liquidity Heatmap:</strong> Bookmap visualization of resting liquidity. Tap the ⛶ expand icon (or press <kbd>F</kbd>) to open it in fullscreen landscape mode for detailed order book analysis.</li>
                     </ol>
                 `,
                 sources: `
@@ -1310,7 +1449,7 @@
                         <li><strong>Chart:</strong> TradingView embed (BITSTAMP:BTCUSD) — real-time.</li>
                         <li><strong>Technical Analysis:</strong> TradingView Technical Analysis widget — live gauge with oscillators and moving averages.</li>
                         <li><strong>Calendar:</strong> TradingView Economic Calendar widget — auto-refreshing.</li>
-                        <li><strong>Heatmap:</strong> Bookmap embed — real-time.</li>
+                        <li><strong>Heatmap:</strong> Bookmap embed — real-time, with fullscreen toggle.</li>
                         <li><strong>News:</strong> cryptocurrency.cv aggregator — refreshed every 3 minutes.</li>
                         <li><strong>Sessions:</strong> Computed client-side from UTC — updated every second.</li>
                     </ul>
@@ -1321,15 +1460,16 @@
                     <ul>
                         <li><kbd>T</kbd> — Toggle light / dark theme</li>
                         <li><kbd>R</kbd> — Refresh all market data</li>
+                        <li><kbd>F</kbd> — Toggle Bookmap fullscreen (landscape on mobile)</li>
                         <li><kbd>?</kbd> — Show this shortcut help</li>
                         <li><kbd>N</kbd> — Scroll to developer notes</li>
-                        <li><kbd>Esc</kbd> — Dismiss all toasts</li>
+                        <li><kbd>Esc</kbd> — Exit Bookmap fullscreen / dismiss toasts</li>
                     </ul>
                     <div class="callout info"><strong>Tip:</strong> Shortcuts are disabled while typing in the position calculator — just click outside the input to re-enable.</div>
                 `,
                 changelog: `
                     <h4>📝 Changelog</h4>
-                    <div class="notes-changelog-item"><span class="ver">v2.6.0</span><span class="desc">Enlarged TradingView chart and Bookmap heatmap on mobile for full readability. Chart now uses viewport-height scaling up to ~660px; Bookmap jumps from 300px to 460–540px depending on phone size.</span></div>
+                    <div class="notes-changelog-item"><span class="ver">v2.6.0</span><span class="desc">Added Bookmap fullscreen / landscape mode: tap the ⛶ button or press F. Native Fullscreen API is used where available; CSS fallback covers iOS Safari. On mobile, attempts to lock screen orientation to landscape so the heatmap fills the entire display.</span></div>
                     <div class="notes-changelog-item"><span class="ver">v2.5.0</span><span class="desc">Fully responsive across desktop, tablet, and all phone sizes including Galaxy Fold. Added iOS text-size-adjust, touch-action, momentum scrolling, and input font-size fixes. Theme-color meta added for mobile browser chrome.</span></div>
                     <div class="notes-changelog-item"><span class="ver">v2.4.0</span><span class="desc">Replaced Quick Links with TradingView's official Technical Analysis widget — live Strong Buy / Strong Sell gauge backed by oscillators and moving averages.</span></div>
                     <div class="notes-changelog-item"><span class="ver">v2.3.0</span><span class="desc">Added Developer Notes section, Market Sessions clock, Position Calculator, Quick Links, toast notifications, keyboard shortcuts, footer with version info.</span></div>
@@ -1371,7 +1511,7 @@
                 }
                 else if (e.key === '?') {
                     e.preventDefault();
-                    showToast('T: theme · R: refresh · N: notes · Esc: dismiss', 'info', 5000);
+                    showToast('T: theme · R: refresh · F: Bookmap fullscreen · N: notes · Esc: exit/dismiss', 'info', 5000);
                 }
                 else if (e.key === 'n' || e.key === 'N') {
                     e.preventDefault();
@@ -1383,7 +1523,7 @@
             });
 
             document.getElementById('help-btn')?.addEventListener('click', () => {
-                showToast('Shortcuts — T: theme · R: refresh · N: notes · Esc: dismiss', 'info', 5000);
+                showToast('Shortcuts — T: theme · R: refresh · F: Bookmap fullscreen · N: notes · Esc: exit/dismiss', 'info', 5000);
             });
 
             initBitstampWS();
