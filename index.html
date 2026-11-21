@@ -482,7 +482,7 @@
         @keyframes shimmer { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
 
         /* ============================================================
-           RESPONSIVE — TABLET (portrait & small landscape)
+           RESPONSIVE — TABLET
            ============================================================ */
         @media (max-width: 1200px) {
             .chart-row { grid-template-columns: 1fr 300px; }
@@ -499,17 +499,23 @@
 
         /* ============================================================
            RESPONSIVE — LARGE PHONE / SMALL TABLET
+           Chart & Bookmap enlarged for readability
            ============================================================ */
         @media (max-width: 768px) {
             .dashboard { padding: 0 16px; gap: 16px; }
             header { padding: 14px 16px 8px; }
-            .chart-wrapper { height: clamp(350px, 55vh, 480px); }
+
+            /* Chart: fills most of viewport height */
+            .chart-wrapper { height: clamp(440px, 68vh, 640px); }
+
+            /* Bookmap: much taller for readable heatmap */
+            .bookmap-panel { height: 500px; }
+
             .sidebar-stack { flex-direction: column; }
             .tools-row { grid-template-columns: 1fr; }
             .technical-analysis-panel { grid-column: span 1; }
-            .trade-panel { height: 340px; }
-            .calendar-panel { height: 380px; }
-            .bookmap-panel { height: 340px; }
+            .trade-panel { height: 380px; }
+            .calendar-panel { height: 420px; }
             .notes-content { padding: 16px 18px; }
         }
 
@@ -531,6 +537,13 @@
             .pulse-card { padding: 12px 14px; }
             .pulse-card .pulse-value { font-size: 1.25rem; }
             .panel-header { padding: 11px 14px; }
+
+            /* Chart: bigger than before — dominant panel on phone */
+            .chart-wrapper { height: clamp(460px, 72vh, 660px); }
+
+            /* Bookmap: tall, readable */
+            .bookmap-panel { height: 540px; }
+
             .trade-row {
                 grid-template-columns: 60px 40px minmax(74px, 1fr) minmax(52px, 1fr) minmax(72px, 1fr);
                 gap: 4px; padding: 6px 10px; font-size: 10.5px;
@@ -540,7 +553,7 @@
             .toast-container { left: 14px; right: 14px; bottom: 14px; }
             .toast { max-width: 100%; }
             .site-footer { padding: 16px 14px; }
-            .calc-field input { font-size: 16px; } /* prevents iOS auto-zoom */
+            .calc-field input { font-size: 16px; }
         }
 
         /* ============================================================
@@ -559,13 +572,20 @@
             .pulse-card .pulse-value { font-size: 1.1rem; }
             .panel-header { font-size: 11px; letter-spacing: 0.01em; }
             .panel-header .badge { font-size: 9px; padding: 1px 6px; }
+
+            /* Chart: still huge on small phones */
+            .chart-wrapper { height: clamp(440px, 70vh, 620px); }
+
+            /* Bookmap: comfortably readable */
+            .bookmap-panel { height: 500px; }
+
+            .calendar-panel { height: 400px; }
+            .trade-panel { height: 340px; }
+
             .trade-row {
                 grid-template-columns: 50px 34px minmax(66px, 1fr) minmax(44px, 1fr) minmax(64px, 1fr);
                 gap: 3px; padding: 5px 8px; font-size: 10px;
             }
-            .bookmap-panel { height: 300px; }
-            .calendar-panel { height: 360px; }
-            .trade-panel { height: 320px; }
             .notes-content { padding: 14px 14px; }
             .notes-content p, .notes-content li { font-size: 12.5px; }
             .notes-content h4 { font-size: 0.95rem; }
@@ -590,9 +610,14 @@
             .pulse-card { padding: 10px 11px; }
             .pulse-card .pulse-label { font-size: 10px; }
             .pulse-card .pulse-value { font-size: 1.05rem; }
-            .trade-feed {
-                overflow-x: auto;
-            }
+
+            /* Chart: keep it dominant even on Fold */
+            .chart-wrapper { height: clamp(400px, 65vh, 560px); }
+
+            /* Bookmap: still tall enough to see liquidity bands */
+            .bookmap-panel { height: 460px; }
+
+            .trade-feed { overflow-x: auto; }
             .trade-row {
                 min-width: 310px;
                 grid-template-columns: 46px 32px minmax(64px, 1fr) minmax(44px, 1fr) minmax(62px, 1fr);
@@ -605,9 +630,9 @@
            RESPONSIVE — PHONE LANDSCAPE (short viewport)
            ============================================================ */
         @media (max-height: 500px) and (orientation: landscape) {
-            .chart-wrapper { height: 300px; }
-            .bookmap-panel { height: 260px; }
-            .trade-panel, .calendar-panel { height: 280px; }
+            .chart-wrapper { height: 380px; }
+            .bookmap-panel { height: 340px; }
+            .trade-panel, .calendar-panel { height: 300px; }
         }
     </style>
 </head>
@@ -844,7 +869,7 @@
 
     <footer class="site-footer">
         <div class="foot-left">
-            <span>BTC Terminal · <span id="footer-version">v2.5.0</span></span>
+            <span>BTC Terminal · <span id="footer-version">v2.6.0</span></span>
             <span>·</span>
             <span>Built for <strong style="color: var(--accent-cyan)">JEROME QUIZON TRD27</strong></span>
         </div>
@@ -1304,6 +1329,7 @@
                 `,
                 changelog: `
                     <h4>📝 Changelog</h4>
+                    <div class="notes-changelog-item"><span class="ver">v2.6.0</span><span class="desc">Enlarged TradingView chart and Bookmap heatmap on mobile for full readability. Chart now uses viewport-height scaling up to ~660px; Bookmap jumps from 300px to 460–540px depending on phone size.</span></div>
                     <div class="notes-changelog-item"><span class="ver">v2.5.0</span><span class="desc">Fully responsive across desktop, tablet, and all phone sizes including Galaxy Fold. Added iOS text-size-adjust, touch-action, momentum scrolling, and input font-size fixes. Theme-color meta added for mobile browser chrome.</span></div>
                     <div class="notes-changelog-item"><span class="ver">v2.4.0</span><span class="desc">Replaced Quick Links with TradingView's official Technical Analysis widget — live Strong Buy / Strong Sell gauge backed by oscillators and moving averages.</span></div>
                     <div class="notes-changelog-item"><span class="ver">v2.3.0</span><span class="desc">Added Developer Notes section, Market Sessions clock, Position Calculator, Quick Links, toast notifications, keyboard shortcuts, footer with version info.</span></div>
@@ -1321,7 +1347,7 @@
                     <p><strong>No liability.</strong> By using this dashboard, you agree that the developer and any affiliates are not liable for any trading losses, missed opportunities, data outages, or other damages arising from its use.</p>
                     <p><strong>Trademarks.</strong> Bitcoin, TradingView, Binance, Bitstamp, Bookmap, CoinGecko, Forex Factory, and all other names and logos are the property of their respective owners. This dashboard is an independent, personal tool — it is not affiliated with, endorsed by, or sponsored by any of these companies.</p>
                     <p><strong>Personal build.</strong> This terminal was built specifically for <strong>JEROME QUIZON TRD27</strong>. If you are viewing this on a shared computer, be sure to log out of any exchange accounts and close the browser when finished.</p>
-                    <div class="callout info">Questions or feedback? Reach out to the developer directly. Version <code>v2.5.0</code> — last updated November 2025.</div>
+                    <div class="callout info">Questions or feedback? Reach out to the developer directly. Version <code>v2.6.0</code> — last updated November 2025.</div>
                 `
             };
             function renderNotes(tab) {
